@@ -13,9 +13,6 @@ import com.badlogic.gdx.utils.TimeUtils;
 
 import java.util.Iterator;
 
-/**
- * Created by Lawrence on 31/01/2015.
- */
 public class GameScreen implements Screen {
     private final ComboGame game;
 
