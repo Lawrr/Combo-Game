@@ -21,9 +21,10 @@ public class GameScreen implements Screen {
     private Texture placedBlockImage;
     private Array<PlacedBlock> placedBlocks;
 
-    private int spawnSpeed;
-    private int fallSpeed;
+    private float spawnDelay;
+    private float fallSpeed;
     private int numPlaced;
+    private int numFalling;
 
     public GameScreen (final ComboGame game) {
         this.game = game;
@@ -32,29 +33,15 @@ public class GameScreen implements Screen {
         camera.setToOrtho(false, ComboGame.screenWidth, ComboGame.screenHeight);
         fallingBlockImage = new Texture("falling-block.png");
         fallingBlocks = new Array<FallingBlock>();
-        placedBlockImage = new Texture("falling-block.png");
+        placedBlockImage = new Texture("blue-block.jpg");
         placedBlocks = new Array<PlacedBlock>();
 
-        spawnSpeed = 1;
+        spawnDelay = 1.5f;
         fallSpeed = 50;
         numPlaced = 0;
+        numFalling = 0;
 
-        spawnFallingBlock();
-    }
-    public Texture getPlacedBlockImage() {
-        return placedBlockImage;
-    }
-    public Array<FallingBlock> getFallingBlocks() {
-        return fallingBlocks;
-    }
-    public Array<PlacedBlock> getPlacedBlocks() {
-        return placedBlocks;
-    }
-    public int getNumPlaced() {
-        return numPlaced;
-    }
-    public void setNumPlaced(int numPlaced) {
-        this.numPlaced = numPlaced;
+        createFallingBlock();
     }
 
     @Override
@@ -72,16 +59,24 @@ public class GameScreen implements Screen {
         // Begin drawing
         game.batch.begin();
         for (PlacedBlock placedBlock : placedBlocks) {
-            game.batch.draw(placedBlockImage, placedBlock.x, placedBlock.y);
+            if (!placedBlock.isEmpty()) {
+                game.batch.draw(placedBlockImage, placedBlock.x, placedBlock.y);
+            } else {
+                game.batch.draw(fallingBlockImage, placedBlock.x, placedBlock.y);
+            }
         }
         for (FallingBlock fallingBlock : fallingBlocks) {
-            game.batch.draw(fallingBlockImage, fallingBlock.x, fallingBlock.y);
+            if (!fallingBlock.isPlaced()) {
+                game.batch.draw(fallingBlockImage, fallingBlock.x, fallingBlock.y);
+            } else {
+                game.batch.draw(placedBlockImage, fallingBlock.x, fallingBlock.y);
+            }
         }
         game.batch.end();
 
         // Spawn blocks
-        if (TimeUtils.nanoTime() - lastBlockSpawnTime > spawnSpeed * 1000000000) {
-            spawnFallingBlock();
+        if (TimeUtils.nanoTime() - lastBlockSpawnTime > spawnDelay * 1000000000) {
+            createFallingBlock();
         }
 
         // Move blocks
@@ -89,19 +84,49 @@ public class GameScreen implements Screen {
         while (iter.hasNext()) {
             FallingBlock fallingBlock = iter.next();
             fallingBlock.setY(fallingBlock.getY() - fallSpeed * Gdx.graphics.getDeltaTime());
-            if (fallingBlock.getY() + fallingBlock.getHeight() < 0) {
+            if (fallingBlock.getY() < numPlaced * fallingBlock.getHeight()) {
+                createPlacedBlock(!fallingBlock.isPlaced());
                 iter.remove();
             }
 
         }
     }
 
-    private void spawnFallingBlock () {
+    public void handleTouchDown (int x, int y, int pointer, int button) {
+        float pointerX = InputTransform.getCursorToModelX(x);
+        float pointerY = InputTransform.getCursorToModelY(y);
+
+        Iterator<FallingBlock> iter = fallingBlocks.iterator();
+        int indexDecrement = 0;
+        while (iter.hasNext()) {
+            FallingBlock fallingBlock = iter.next();
+            fallingBlock.setIndex(fallingBlock.getIndex() - indexDecrement);
+            if ((fallingBlock.contains(pointerX, pointerY) && !fallingBlock.isPlaced()) || (fallingBlock.getIndex() == 0 && fallingBlock.isPlaced())) {
+                if (fallingBlock.getIndex() == 0) {
+                    indexDecrement++;
+                    createPlacedBlock(false);
+                    iter.remove();
+                } else {
+                    fallingBlock.setPlaced(true);
+                }
+            }
+        }
+    }
+
+    public void createPlacedBlock (boolean empty) {
+        float placedBlockY = numPlaced * placedBlockImage.getHeight();
+        PlacedBlock newBlock = new PlacedBlock(80, placedBlockY, placedBlockImage.getWidth(), placedBlockImage.getHeight(), empty);
+        placedBlocks.add(newBlock);
+        numPlaced++;
+    }
+
+    private void createFallingBlock () {
         // Spawns a block at the top of the screen
         if (fallingBlocks.size + placedBlocks.size < 12) {
-            FallingBlock fallingBlock = new FallingBlock(80, ComboGame.screenHeight, fallingBlockImage.getWidth(), fallingBlockImage.getHeight());
+            FallingBlock fallingBlock = new FallingBlock(80, ComboGame.screenHeight, fallingBlockImage.getWidth(), fallingBlockImage.getHeight(), numFalling);
             fallingBlocks.add(fallingBlock);
             lastBlockSpawnTime = TimeUtils.nanoTime();
+            numFalling++;
         }
     }
 
