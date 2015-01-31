@@ -98,31 +98,16 @@ public class GameScreen extends InputAdapter implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(new InputAdapter() {
-            public boolean touchDown (int x, int y, int pointer, int button) {
+            public boolean touchDown(int x, int y, int pointer, int button) {
                 float pointerX = InputTransform.getCursorToModelX(x);
                 float pointerY = InputTransform.getCursorToModelY(y);
 
                 Iterator<FallingBlock> iter = fallingBlocks.iterator();
                 while (iter.hasNext()) {
                     FallingBlock fallingBlock = iter.next();
-                    if(fallingBlock.contains(pointerX, pointerY)) {
-                        fallingBlock.setSelected(true);
-                    }
-                }
-                return true; // return true to indicate the event was handled
-            }
-
-            public boolean touchUp (int x, int y, int pointer, int button) {
-                float pointerX = InputTransform.getCursorToModelX(x);
-                float pointerY = InputTransform.getCursorToModelY(y);
-
-                Iterator<FallingBlock> iter = fallingBlocks.iterator();
-                while (iter.hasNext()) {
-                    FallingBlock fallingBlock = iter.next();
-                    if(fallingBlock.contains(pointerX, pointerY) && fallingBlock.isSelected()) {
+                    if (fallingBlock.contains(pointerX, pointerY)) {
                         iter.remove();
                     }
-                    fallingBlock.setSelected(false);
                 }
                 return true; // return true to indicate the event was handled
             }
