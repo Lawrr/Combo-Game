@@ -16,8 +16,9 @@ import com.badlogic.gdx.utils.TimeUtils;
 import java.util.Iterator;
 
 public class ComboGame extends Game {
-	public int screenWidth = 640;
-	public int screenHeight = 960;
+	public static int screenWidth = 640;
+	public static int screenHeight = 960;
+
 	public SpriteBatch batch;
 	public BitmapFont font;
 
@@ -30,7 +31,7 @@ public class ComboGame extends Game {
 
 	@Override
 	public void render () {
-		super.render();
+        super.render();
 	}
 
 	@Override

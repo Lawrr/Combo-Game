@@ -1,24 +1,26 @@
 package com.syurba.combogame;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.TimeUtils;
 
 import java.util.Iterator;
 
-public class GameScreen implements Screen {
+public class GameScreen extends InputAdapter implements Screen {
     private final ComboGame game;
 
+    private Vector3 touchPos;
     private OrthographicCamera camera;
     private Texture fallingBlockImage;
-    private Array<Rectangle> fallingBlocks;
+    private Array<FallingBlock> fallingBlocks;
     private long lastBlockSpawnTime;
 
     public GameScreen (final ComboGame game) {
@@ -27,7 +29,7 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, game.screenWidth, game.screenHeight);
         fallingBlockImage = new Texture("falling-block.png");
-        fallingBlocks = new Array<Rectangle>();
+        fallingBlocks = new Array<FallingBlock>();
         spawnFallingBlock();
     }
 
@@ -45,7 +47,7 @@ public class GameScreen implements Screen {
 
         // Begin drawing
         game.batch.begin();
-        for (Rectangle fallingBlock : fallingBlocks) {
+        for (FallingBlock fallingBlock : fallingBlocks) {
             game.batch.draw(fallingBlockImage, fallingBlock.x, fallingBlock.y);
         }
         game.batch.end();
@@ -56,7 +58,7 @@ public class GameScreen implements Screen {
         }
 
         // Process user input
-        Vector3 touchPos = null;
+        touchPos = null;
         if (Gdx.input.isTouched()) {
             touchPos = new Vector3();
             touchPos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
@@ -64,26 +66,20 @@ public class GameScreen implements Screen {
         }
 
         // Move blocks
-        Iterator<Rectangle> iter = fallingBlocks.iterator();
+        Iterator<FallingBlock> iter = fallingBlocks.iterator();
         while (iter.hasNext()) {
-            Rectangle fallingBlock = iter.next();
-            fallingBlock.y -= 50 * Gdx.graphics.getDeltaTime();
-            if (fallingBlock.y + fallingBlock.getHeight() < 0) {
+            FallingBlock fallingBlock = iter.next();
+            fallingBlock.setY(fallingBlock.getY() - 50 * Gdx.graphics.getDeltaTime());
+            if (fallingBlock.getY() + fallingBlock.getHeight() < 0) {
                 iter.remove();
             }
-            if (touchPos != null && fallingBlock.contains(touchPos.x, touchPos.y)) {
-                iter.remove();
-            }
+
         }
     }
 
     private void spawnFallingBlock () {
         // Spawns a block at the top of the screen
-        Rectangle fallingBlock = new Rectangle();
-        fallingBlock.x = 80;
-        fallingBlock.y = game.screenHeight;
-        fallingBlock.width = fallingBlockImage.getWidth();
-        fallingBlock.height = fallingBlockImage.getHeight();
+        FallingBlock fallingBlock = new FallingBlock(80, game.screenHeight, fallingBlockImage.getWidth(), fallingBlockImage.getHeight());
         fallingBlocks.add(fallingBlock);
         lastBlockSpawnTime = TimeUtils.nanoTime();
     }
@@ -101,7 +97,36 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
+        Gdx.input.setInputProcessor(new InputAdapter() {
+            public boolean touchDown (int x, int y, int pointer, int button) {
+                float pointerX = InputTransform.getCursorToModelX(x);
+                float pointerY = InputTransform.getCursorToModelY(y);
 
+                Iterator<FallingBlock> iter = fallingBlocks.iterator();
+                while (iter.hasNext()) {
+                    FallingBlock fallingBlock = iter.next();
+                    if(fallingBlock.contains(pointerX, pointerY)) {
+                        fallingBlock.setSelected(true);
+                    }
+                }
+                return true; // return true to indicate the event was handled
+            }
+
+            public boolean touchUp (int x, int y, int pointer, int button) {
+                float pointerX = InputTransform.getCursorToModelX(x);
+                float pointerY = InputTransform.getCursorToModelY(y);
+
+                Iterator<FallingBlock> iter = fallingBlocks.iterator();
+                while (iter.hasNext()) {
+                    FallingBlock fallingBlock = iter.next();
+                    if(fallingBlock.contains(pointerX, pointerY) && fallingBlock.isSelected()) {
+                        iter.remove();
+                    }
+                    fallingBlock.setSelected(false);
+                }
+                return true; // return true to indicate the event was handled
+            }
+        });
     }
 
     @Override
