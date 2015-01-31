@@ -14,14 +14,21 @@ import com.badlogic.gdx.utils.TimeUtils;
 
 import java.util.Iterator;
 
-public class GameScreen extends InputAdapter implements Screen {
+public class GameScreen implements Screen {
     private final ComboGame game;
 
     private Vector3 touchPos;
     private OrthographicCamera camera;
-    private Texture fallingBlockImage;
-    private Array<FallingBlock> fallingBlocks;
     private long lastBlockSpawnTime;
+
+    private Texture fallingBlockImage;
+    private Texture placedBlockImage;
+
+    private int spawnSpeed = 1;
+    private int fallSpeed = 50;
+
+    public Array<FallingBlock> fallingBlocks;
+    public Array<PlacedBlock> placedBlocks;
 
     public GameScreen (final ComboGame game) {
         this.game = game;
@@ -30,6 +37,9 @@ public class GameScreen extends InputAdapter implements Screen {
         camera.setToOrtho(false, game.screenWidth, game.screenHeight);
         fallingBlockImage = new Texture("falling-block.png");
         fallingBlocks = new Array<FallingBlock>();
+        placedBlockImage = new Texture("falling-block.png");
+        placedBlocks = new Array<PlacedBlock>();
+
         spawnFallingBlock();
     }
 
@@ -47,29 +57,24 @@ public class GameScreen extends InputAdapter implements Screen {
 
         // Begin drawing
         game.batch.begin();
+        for (PlacedBlock placedBlock : placedBlocks) {
+            game.batch.draw(placedBlockImage, placedBlock.x, placedBlock.y);
+        }
         for (FallingBlock fallingBlock : fallingBlocks) {
             game.batch.draw(fallingBlockImage, fallingBlock.x, fallingBlock.y);
         }
         game.batch.end();
 
         // Spawn blocks
-        if (TimeUtils.nanoTime() - lastBlockSpawnTime > 0.8 * 1000000000) {
+        if (TimeUtils.nanoTime() - lastBlockSpawnTime > spawnSpeed * 1000000000) {
             spawnFallingBlock();
-        }
-
-        // Process user input
-        touchPos = null;
-        if (Gdx.input.isTouched()) {
-            touchPos = new Vector3();
-            touchPos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
-            camera.unproject(touchPos);
         }
 
         // Move blocks
         Iterator<FallingBlock> iter = fallingBlocks.iterator();
         while (iter.hasNext()) {
             FallingBlock fallingBlock = iter.next();
-            fallingBlock.setY(fallingBlock.getY() - 50 * Gdx.graphics.getDeltaTime());
+            fallingBlock.setY(fallingBlock.getY() - fallSpeed * Gdx.graphics.getDeltaTime());
             if (fallingBlock.getY() + fallingBlock.getHeight() < 0) {
                 iter.remove();
             }
@@ -97,21 +102,7 @@ public class GameScreen extends InputAdapter implements Screen {
 
     @Override
     public void show() {
-        Gdx.input.setInputProcessor(new InputAdapter() {
-            public boolean touchDown(int x, int y, int pointer, int button) {
-                float pointerX = InputTransform.getCursorToModelX(x);
-                float pointerY = InputTransform.getCursorToModelY(y);
-
-                Iterator<FallingBlock> iter = fallingBlocks.iterator();
-                while (iter.hasNext()) {
-                    FallingBlock fallingBlock = iter.next();
-                    if (fallingBlock.contains(pointerX, pointerY)) {
-                        iter.remove();
-                    }
-                }
-                return true; // return true to indicate the event was handled
-            }
-        });
+        Gdx.input.setInputProcessor(new GameInputProcessor(this));
     }
 
     @Override
