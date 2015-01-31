@@ -31,10 +31,14 @@ public class GameInputProcessor implements InputProcessor {
         float pointerX = InputTransform.getCursorToModelX(x);
         float pointerY = InputTransform.getCursorToModelY(y);
 
-        Iterator<FallingBlock> iter = gameScreen.fallingBlocks.iterator();
+        Iterator<FallingBlock> iter = gameScreen.getFallingBlocks().iterator();
         while (iter.hasNext()) {
             FallingBlock fallingBlock = iter.next();
             if (fallingBlock.contains(pointerX, pointerY)) {
+                float placedBlockY = gameScreen.getNumPlaced() * fallingBlock.getHeight();
+                PlacedBlock newBlock = new PlacedBlock(80, placedBlockY, gameScreen.getPlacedBlockImage().getWidth(), gameScreen.getPlacedBlockImage().getHeight());
+                gameScreen.getPlacedBlocks().add(newBlock);
+                gameScreen.setNumPlaced(gameScreen.getNumPlaced() + 1);
                 iter.remove();
             }
         }

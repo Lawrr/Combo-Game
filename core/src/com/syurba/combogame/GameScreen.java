@@ -1,14 +1,10 @@
 package com.syurba.combogame;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.InputAdapter;
-import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.TimeUtils;
 
@@ -17,30 +13,48 @@ import java.util.Iterator;
 public class GameScreen implements Screen {
     private final ComboGame game;
 
-    private Vector3 touchPos;
     private OrthographicCamera camera;
     private long lastBlockSpawnTime;
 
     private Texture fallingBlockImage;
+    private Array<FallingBlock> fallingBlocks;
     private Texture placedBlockImage;
+    private Array<PlacedBlock> placedBlocks;
 
-    private int spawnSpeed = 1;
-    private int fallSpeed = 50;
-
-    public Array<FallingBlock> fallingBlocks;
-    public Array<PlacedBlock> placedBlocks;
+    private int spawnSpeed;
+    private int fallSpeed;
+    private int numPlaced;
 
     public GameScreen (final ComboGame game) {
         this.game = game;
 
         camera = new OrthographicCamera();
-        camera.setToOrtho(false, game.screenWidth, game.screenHeight);
+        camera.setToOrtho(false, ComboGame.screenWidth, ComboGame.screenHeight);
         fallingBlockImage = new Texture("falling-block.png");
         fallingBlocks = new Array<FallingBlock>();
         placedBlockImage = new Texture("falling-block.png");
         placedBlocks = new Array<PlacedBlock>();
 
+        spawnSpeed = 1;
+        fallSpeed = 50;
+        numPlaced = 0;
+
         spawnFallingBlock();
+    }
+    public Texture getPlacedBlockImage() {
+        return placedBlockImage;
+    }
+    public Array<FallingBlock> getFallingBlocks() {
+        return fallingBlocks;
+    }
+    public Array<PlacedBlock> getPlacedBlocks() {
+        return placedBlocks;
+    }
+    public int getNumPlaced() {
+        return numPlaced;
+    }
+    public void setNumPlaced(int numPlaced) {
+        this.numPlaced = numPlaced;
     }
 
     @Override
@@ -84,9 +98,11 @@ public class GameScreen implements Screen {
 
     private void spawnFallingBlock () {
         // Spawns a block at the top of the screen
-        FallingBlock fallingBlock = new FallingBlock(80, game.screenHeight, fallingBlockImage.getWidth(), fallingBlockImage.getHeight());
-        fallingBlocks.add(fallingBlock);
-        lastBlockSpawnTime = TimeUtils.nanoTime();
+        if (fallingBlocks.size + placedBlocks.size < 12) {
+            FallingBlock fallingBlock = new FallingBlock(80, ComboGame.screenHeight, fallingBlockImage.getWidth(), fallingBlockImage.getHeight());
+            fallingBlocks.add(fallingBlock);
+            lastBlockSpawnTime = TimeUtils.nanoTime();
+        }
     }
 
     @Override
