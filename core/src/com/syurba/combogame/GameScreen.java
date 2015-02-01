@@ -21,8 +21,9 @@ public class GameScreen implements Screen {
     private Texture stationaryBlockImage = new Texture("blue-block.png");
     private Array<Block> stationaryBlocks = new Array<Block>();
 
-    private float fallSpeed = 50;
-    private float createTime = 1.5f;
+    private float fallingBlockSpeed = 100;
+    private float stationaryBlockSpeed = 2000;
+    private float createBlockDelay = 0.75f;
     private float blockPosX = 130;
     private int numStationary = 0;
     private int numFalling = 0;
@@ -67,25 +68,38 @@ public class GameScreen implements Screen {
         createBlockTick();
 
         // Move blocks
-        moveBlockTick();
+        moveFallingBlocks();
+        moveStationaryBlocks();
     }
 
     private void createBlockTick () {
         // Check if it is time to create a new block
-        if (TimeUtils.nanoTime() - lastBlockCreateTime > createTime * 1000000000) {
+        if (TimeUtils.nanoTime() - lastBlockCreateTime > createBlockDelay * 1000000000) {
             createFallingBlock();
         }
     }
 
-    private void moveBlockTick () {
+    private void moveFallingBlocks () {
         // Moves falling blocks' y positions
         Iterator<Block> iter = fallingBlocks.iterator();
         while (iter.hasNext()) {
             Block fallingBlock = iter.next();
-            fallingBlock.setY(fallingBlock.getY() - fallSpeed * Gdx.graphics.getDeltaTime());
-            if (fallingBlock.getY() < numStationary * fallingBlock.getHeight()) {
-                createStationaryBlock(fallingBlock.getColor());
+            if (fallingBlock.getY() - (fallingBlockSpeed * Gdx.graphics.getDeltaTime()) < numStationary * fallingBlock.getHeight()) {
+                createStationaryBlock(fallingBlock);
                 iter.remove();
+            } else {
+                fallingBlock.setY(fallingBlock.getY() - fallingBlockSpeed * Gdx.graphics.getDeltaTime());
+            }
+        }
+    }
+
+    private void moveStationaryBlocks () {
+        // Moves stationary blocks' y positions
+        for (Block stationaryBlock : stationaryBlocks) {
+            if (stationaryBlock.getY() - (stationaryBlockSpeed * Gdx.graphics.getDeltaTime()) > stationaryBlock.getIndex() * stationaryBlock.getHeight()) {
+                stationaryBlock.setY(stationaryBlock.getY() - stationaryBlockSpeed * Gdx.graphics.getDeltaTime());
+            } else {
+                stationaryBlock.setY(stationaryBlock.getIndex() * stationaryBlock.getHeight());
             }
         }
     }
@@ -105,7 +119,7 @@ public class GameScreen implements Screen {
                 break;
             }
         }
-        dropBlocks();
+        setNewStationaryBlocks();
 
         if (!touchedFallingBlock) {
             for (Block stationaryBlock : stationaryBlocks) {
@@ -146,13 +160,11 @@ public class GameScreen implements Screen {
             for (int i = lowerIndex; i < stationaryBlocks.size; i++) {
                 Block stationaryBlock = stationaryBlocks.get(i);
                 stationaryBlock.setIndex(stationaryBlock.getIndex() - blocksInCombo);
-                float stationaryBlockY = stationaryBlock.getIndex() * stationaryBlockImage.getHeight();
-                stationaryBlock.setY(stationaryBlockY);
             }
         }
     }
 
-    private void dropBlocks () {
+    private void setNewStationaryBlocks () {
         // Drops blocks into stationary position
         int numBotFilled;
         // Count how many blocks from the bottom are filled
@@ -168,7 +180,7 @@ public class GameScreen implements Screen {
             for (int i = 0; i < numBotFilled; i++) {
                 Block fallingBlock = fallingBlocks.get(0);
                 removeFallingBlock(0);
-                createStationaryBlock(fallingBlock.getColor());
+                createStationaryBlock(fallingBlock);
             }
             // Set new indices
             for (int i = 0; i < fallingBlocks.size; i++) {
@@ -178,10 +190,9 @@ public class GameScreen implements Screen {
         }
     }
 
-    private void createStationaryBlock (BlockColor color) {
+    private void createStationaryBlock (Block block) {
         // Creates a stationary block at the bottom of the screen
-        float stationaryBlockY = numStationary * stationaryBlockImage.getHeight();
-        Block newBlock = new Block(blockPosX, stationaryBlockY, stationaryBlockImage.getWidth(), stationaryBlockImage.getHeight(), numStationary, color);
+        Block newBlock = new Block(blockPosX, block.getY(), stationaryBlockImage.getWidth(), stationaryBlockImage.getHeight(), numStationary, block.getColor());
         stationaryBlocks.add(newBlock);
         numStationary++;
     }
