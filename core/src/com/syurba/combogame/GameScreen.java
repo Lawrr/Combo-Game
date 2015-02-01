@@ -21,9 +21,9 @@ public class GameScreen implements Screen {
     private Texture stationaryBlockImage = new Texture("blue-block.png");
     private Array<Block> stationaryBlocks = new Array<Block>();
 
-    private float fallingBlockSpeed = 100;
-    private float stationaryBlockSpeed = 2000;
-    private float createBlockDelay = 0.75f;
+    private float fallingBlockSpeed = 80;
+    private float stationaryBlockSpeed = 3000;
+    private float createBlockDelay = 0.85f;
     private float blockPosX = 130;
     private int numStationary = 0;
     private int numFalling = 0;
