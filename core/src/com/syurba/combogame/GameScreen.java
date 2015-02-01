@@ -54,42 +54,10 @@ public class GameScreen implements Screen {
         // Begin drawing
         game.batch.begin();
         for (Block fallingBlock : fallingBlocks) {
-            switch (fallingBlock.getColor()) {
-                case CLEAR:
-                    game.batch.draw(clearBlockImage, fallingBlock.getX(), fallingBlock.getY());
-                    break;
-                case RED:
-                    game.batch.draw(redBlockImage, fallingBlock.getX(), fallingBlock.getY());
-                    break;
-                case GREEN:
-                    game.batch.draw(greenBlockImage, fallingBlock.getX(), fallingBlock.getY());
-                    break;
-                case BLUE:
-                    game.batch.draw(blueBlockImage, fallingBlock.getX(), fallingBlock.getY());
-                    break;
-                case YELLOW:
-                    game.batch.draw(yellowBlockImage, fallingBlock.getX(), fallingBlock.getY());
-                    break;
-            }
+            game.batch.draw(getBlockImage(fallingBlock.getColor()), fallingBlock.getX(), fallingBlock.getY());
         }
         for (Block stationaryBlock : stationaryBlocks) {
-            switch (stationaryBlock.getColor()) {
-                case CLEAR:
-                    game.batch.draw(clearBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
-                    break;
-                case RED:
-                    game.batch.draw(redBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
-                    break;
-                case GREEN:
-                    game.batch.draw(greenBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
-                    break;
-                case BLUE:
-                    game.batch.draw(blueBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
-                    break;
-                case YELLOW:
-                    game.batch.draw(yellowBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
-                    break;
-            }
+            game.batch.draw(getBlockImage(stationaryBlock.getColor()), stationaryBlock.getX(), stationaryBlock.getY());
         }
         game.batch.end();
 
@@ -99,6 +67,31 @@ public class GameScreen implements Screen {
         // Move blocks
         moveFallingBlocks();
         moveStationaryBlocks();
+    }
+
+    private Texture getBlockImage (BlockColor color) {
+        Texture blockImage;
+        switch (color) {
+            case CLEAR:
+                blockImage = clearBlockImage;
+                break;
+            case RED:
+                blockImage = redBlockImage;
+                break;
+            case GREEN:
+                blockImage = greenBlockImage;
+                break;
+            case BLUE:
+                blockImage = blueBlockImage;
+                break;
+            case YELLOW:
+                blockImage = yellowBlockImage;
+                break;
+            default:
+                blockImage = clearBlockImage;
+                break;
+        }
+        return blockImage;
     }
 
     private void createBlockTick () {
@@ -158,6 +151,9 @@ public class GameScreen implements Screen {
                         break;
                     case 3:
                         fallingBlock.setColor(BlockColor.YELLOW);
+                        break;
+                    default:
+                        fallingBlock.setColor(BlockColor.RED);
                         break;
                 }
                 break;
