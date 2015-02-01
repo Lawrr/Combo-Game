@@ -17,9 +17,9 @@ public class GameScreen implements Screen {
     private long lastBlockCreateTime;
 
     private Texture fallingBlockImage = new Texture("falling-block.png");
-    private Array<FallingBlock> fallingBlocks = new Array<FallingBlock>();
-    private Texture stationaryBlockImage = new Texture("blue-block.jpg");
-    private Array<StationaryBlock> stationaryBlocks = new Array<StationaryBlock>();
+    private Array<Block> fallingBlocks = new Array<Block>();
+    private Texture stationaryBlockImage = new Texture("blue-block.png");
+    private Array<Block> stationaryBlocks = new Array<Block>();
 
     private float fallSpeed = 50;
     private float createTime = 1.5f;
@@ -47,18 +47,18 @@ public class GameScreen implements Screen {
 
         // Begin drawing
         game.batch.begin();
-        for (StationaryBlock stationaryBlock : stationaryBlocks) {
-            if (!stationaryBlock.isEmpty()) {
-                game.batch.draw(stationaryBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
-            } else {
-                game.batch.draw(fallingBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
-            }
-        }
-        for (FallingBlock fallingBlock : fallingBlocks) {
-            if (!fallingBlock.isFilled()) {
+        for (Block fallingBlock : fallingBlocks) {
+            if (fallingBlock.getColor() == BlockColor.CLEAR) {
                 game.batch.draw(fallingBlockImage, fallingBlock.getX(), fallingBlock.getY());
             } else {
                 game.batch.draw(stationaryBlockImage, fallingBlock.getX(), fallingBlock.getY());
+            }
+        }
+        for (Block stationaryBlock : stationaryBlocks) {
+            if (stationaryBlock.getColor() == BlockColor.CLEAR) {
+                game.batch.draw(fallingBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
+            } else {
+                game.batch.draw(stationaryBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
             }
         }
         game.batch.end();
@@ -79,12 +79,12 @@ public class GameScreen implements Screen {
 
     private void moveBlockTick () {
         // Moves falling blocks' y positions
-        Iterator<FallingBlock> iter = fallingBlocks.iterator();
+        Iterator<Block> iter = fallingBlocks.iterator();
         while (iter.hasNext()) {
-            FallingBlock fallingBlock = iter.next();
+            Block fallingBlock = iter.next();
             fallingBlock.setY(fallingBlock.getY() - fallSpeed * Gdx.graphics.getDeltaTime());
             if (fallingBlock.getY() < numStationary * fallingBlock.getHeight()) {
-                createStationaryBlock(!fallingBlock.isFilled());
+                createStationaryBlock(fallingBlock.getColor());
                 iter.remove();
             }
         }
@@ -96,9 +96,9 @@ public class GameScreen implements Screen {
         float pointerY = InputTransform.getCursorToModelY(y);
 
         // Fill falling block
-        for (FallingBlock fallingBlock : fallingBlocks) {
-            if (fallingBlock.contains(pointerX, pointerY) && !fallingBlock.isFilled()) {
-                fallingBlock.setFilled(true);
+        for (Block fallingBlock : fallingBlocks) {
+            if (fallingBlock.contains(pointerX, pointerY) && fallingBlock.getColor() == BlockColor.CLEAR) {
+                fallingBlock.setColor(BlockColor.BLUE);
                 break;
             }
         }
@@ -110,8 +110,8 @@ public class GameScreen implements Screen {
         int numBotFilled;
         // Count how many blocks from the bottom are filled
         for (numBotFilled = 0; numBotFilled < fallingBlocks.size; numBotFilled++) {
-            FallingBlock lowerBlock = fallingBlocks.get(numBotFilled);
-            if (!lowerBlock.isFilled()) {
+            Block lowerBlock = fallingBlocks.get(numBotFilled);
+            if (lowerBlock.getColor() == BlockColor.CLEAR) {
                 break;
             }
         }
@@ -119,23 +119,23 @@ public class GameScreen implements Screen {
         if (numBotFilled > 0) {
             int numRemove = numBotFilled;
             for (int i = 0; i < fallingBlocks.size; i++) {
+                Block fallingBlock = fallingBlocks.get(i);
                 if (numRemove > 0) {
                     removeFallingBlock(i);
-                    createStationaryBlock(false);
+                    createStationaryBlock(fallingBlock.getColor());
                     numRemove--;
                     i--;
                 } else {
-                    FallingBlock fallingBlock = fallingBlocks.get(i);
                     fallingBlock.setIndex(fallingBlock.getIndex() - numBotFilled);
                 }
             }
         }
     }
 
-    private void createStationaryBlock (boolean empty) {
+    private void createStationaryBlock (BlockColor color) {
         // Creates a stationary block at the bottom of the screen
         float stationaryBlockY = numStationary * stationaryBlockImage.getHeight();
-        StationaryBlock newBlock = new StationaryBlock(blockPosX, stationaryBlockY, stationaryBlockImage.getWidth(), stationaryBlockImage.getHeight(), empty);
+        Block newBlock = new Block(blockPosX, stationaryBlockY, stationaryBlockImage.getWidth(), stationaryBlockImage.getHeight(), numStationary, color);
         stationaryBlocks.add(newBlock);
         numStationary++;
     }
@@ -143,7 +143,7 @@ public class GameScreen implements Screen {
     private void createFallingBlock () {
         // Spawns a block at the top of the screen
         if (fallingBlocks.size + stationaryBlocks.size < 12) {
-            FallingBlock fallingBlock = new FallingBlock(blockPosX, ComboGame.screenHeight, fallingBlockImage.getWidth(), fallingBlockImage.getHeight(), numFalling);
+            Block fallingBlock = new Block(blockPosX, ComboGame.screenHeight, fallingBlockImage.getWidth(), fallingBlockImage.getHeight(), numFalling);
             fallingBlocks.add(fallingBlock);
             lastBlockCreateTime = TimeUtils.nanoTime();
             numFalling++;
