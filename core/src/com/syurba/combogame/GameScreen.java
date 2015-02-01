@@ -95,14 +95,61 @@ public class GameScreen implements Screen {
         float pointerX = InputTransform.getCursorToModelX(x);
         float pointerY = InputTransform.getCursorToModelY(y);
 
+        boolean touchedFallingBlock = false;
+
         // Fill falling block
         for (Block fallingBlock : fallingBlocks) {
             if (fallingBlock.contains(pointerX, pointerY) && fallingBlock.getColor() == BlockColor.CLEAR) {
+                touchedFallingBlock = true;
                 fallingBlock.setColor(BlockColor.BLUE);
                 break;
             }
         }
         dropBlocks();
+
+        if (!touchedFallingBlock) {
+            for (Block stationaryBlock : stationaryBlocks) {
+                if (stationaryBlock.contains(pointerX, pointerY) && stationaryBlock.getColor() != BlockColor.CLEAR) {
+                    clearBlockCombo(stationaryBlock.getIndex());
+                }
+            }
+        }
+    }
+
+    private void clearBlockCombo (int index) {
+        Block startBlock = stationaryBlocks.get(index);
+        BlockColor comboColor = startBlock.getColor();
+        int upperIndex;
+        int lowerIndex;
+        // Get upper index
+        for (upperIndex = index; upperIndex < stationaryBlocks.size - 1; upperIndex++) {
+            Block upperBlock = stationaryBlocks.get(upperIndex + 1);
+            if (upperBlock.getColor() != comboColor) {
+                break;
+            }
+        }
+        // Get lower index
+        for (lowerIndex = index; lowerIndex > 0; lowerIndex--) {
+            Block lowerBlock = stationaryBlocks.get(lowerIndex - 1);
+            if (lowerBlock.getColor() != comboColor) {
+                break;
+            }
+        }
+        int blocksInCombo = (upperIndex - lowerIndex) + 1;
+        // Check if valid combo
+        if (blocksInCombo > 1) {
+            // Clear blocks
+            for (int i = lowerIndex; i <= upperIndex; i++) {
+                removeStationaryBlock(lowerIndex);
+            }
+            // Set new indices and drop blocks down to their new positions
+            for (int i = lowerIndex; i < stationaryBlocks.size; i++) {
+                Block stationaryBlock = stationaryBlocks.get(i);
+                stationaryBlock.setIndex(stationaryBlock.getIndex() - blocksInCombo);
+                float stationaryBlockY = stationaryBlock.getIndex() * stationaryBlockImage.getHeight();
+                stationaryBlock.setY(stationaryBlockY);
+            }
+        }
     }
 
     private void dropBlocks () {
@@ -115,19 +162,18 @@ public class GameScreen implements Screen {
                 break;
             }
         }
-        // Drop and set new falling block indices
+        // Check if any blocks need dropping
         if (numBotFilled > 0) {
-            int numRemove = numBotFilled;
+            // Drop blocks
+            for (int i = 0; i < numBotFilled; i++) {
+                Block fallingBlock = fallingBlocks.get(0);
+                removeFallingBlock(0);
+                createStationaryBlock(fallingBlock.getColor());
+            }
+            // Set new indices
             for (int i = 0; i < fallingBlocks.size; i++) {
                 Block fallingBlock = fallingBlocks.get(i);
-                if (numRemove > 0) {
-                    removeFallingBlock(i);
-                    createStationaryBlock(fallingBlock.getColor());
-                    numRemove--;
-                    i--;
-                } else {
-                    fallingBlock.setIndex(fallingBlock.getIndex() - numBotFilled);
-                }
+                fallingBlock.setIndex(fallingBlock.getIndex() - numBotFilled);
             }
         }
     }
@@ -138,6 +184,12 @@ public class GameScreen implements Screen {
         Block newBlock = new Block(blockPosX, stationaryBlockY, stationaryBlockImage.getWidth(), stationaryBlockImage.getHeight(), numStationary, color);
         stationaryBlocks.add(newBlock);
         numStationary++;
+    }
+
+    private void removeStationaryBlock (int index) {
+        // Removes a stationary block
+        stationaryBlocks.removeIndex(index);
+        numStationary--;
     }
 
     private void createFallingBlock () {
