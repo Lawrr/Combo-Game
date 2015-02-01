@@ -22,13 +22,18 @@ public class GameScreen implements Screen {
     private Texture greenBlockImage = new Texture("green-block.png");
     private Texture blueBlockImage = new Texture("blue-block.png");
     private Texture yellowBlockImage = new Texture("yellow-block.png");
+    private Texture redPreviewImage = new Texture("red-preview.png");
+    private Texture greenPreviewImage = new Texture("green-preview.png");
+    private Texture bluePreviewImage = new Texture("blue-preview.png");
+    private Texture yellowPreviewImage = new Texture("yellow-preview.png");
 
     private Array<Block> fallingBlocks = new Array<Block>();
     private Array<Block> stationaryBlocks = new Array<Block>();
+    private Array<BlockColor> incomingColors = new Array<BlockColor>();
 
-    private float fallingBlockSpeed = 80;
+    private float fallingBlockSpeed = 70;
     private float stationaryBlockSpeed = 3000;
-    private float createBlockDelay = 0.85f;
+    private float createBlockDelay = 0.95f;
     private float blockPosX = 130;
     private int numStationary = 0;
     private int numFalling = 0;
@@ -37,6 +42,9 @@ public class GameScreen implements Screen {
         this.game = game;
         camera.setToOrtho(false, ComboGame.screenWidth, ComboGame.screenHeight);
         createFallingBlock();
+        for (int i = 0; i < 5; i++) {
+            addIncomingColor();
+        }
     }
 
     @Override
@@ -54,10 +62,20 @@ public class GameScreen implements Screen {
         // Begin drawing
         game.batch.begin();
         for (Block fallingBlock : fallingBlocks) {
-            game.batch.draw(getBlockImage(fallingBlock.getColor()), fallingBlock.getX(), fallingBlock.getY());
+            Texture blockImage = getBlockImage(fallingBlock.getColor());
+            game.batch.draw(blockImage, fallingBlock.getX(), fallingBlock.getY());
         }
         for (Block stationaryBlock : stationaryBlocks) {
-            game.batch.draw(getBlockImage(stationaryBlock.getColor()), stationaryBlock.getX(), stationaryBlock.getY());
+            Texture blockImage = getBlockImage(stationaryBlock.getColor());
+            game.batch.draw(blockImage, stationaryBlock.getX(), stationaryBlock.getY());
+        }
+        for (int i = 0; i < incomingColors.size; i++) {
+            Texture previewImage = getPreviewImage(incomingColors.get(i));
+            if (i == 0) {
+                game.batch.draw(previewImage, 30, ComboGame.screenHeight - 45 - (50 * (incomingColors.size - i)), 65, 65);
+            } else {
+                game.batch.draw(previewImage, 40, ComboGame.screenHeight - 20 - (50 * (incomingColors.size - i)));
+            }
         }
         game.batch.end();
 
@@ -67,6 +85,34 @@ public class GameScreen implements Screen {
         // Move blocks
         moveFallingBlocks();
         moveStationaryBlocks();
+    }
+
+    public void handleTouchDown (int x, int y, int pointer, int button) {
+        // Transform points
+        float pointerX = InputTransform.getCursorToModelX(x);
+        float pointerY = InputTransform.getCursorToModelY(y);
+
+        boolean touchedFallingBlock = false;
+
+        // Fill falling block
+        for (Block fallingBlock : fallingBlocks) {
+            if (fallingBlock.contains(pointerX, pointerY) && fallingBlock.getColor() == BlockColor.CLEAR) {
+                fallingBlock.setColor(incomingColors.get(0));
+                incomingColors.removeIndex(0);
+                addIncomingColor();
+                touchedFallingBlock = true;
+                break;
+            }
+        }
+        setNewStationaryBlocks();
+
+        if (!touchedFallingBlock) {
+            for (Block stationaryBlock : stationaryBlocks) {
+                if (stationaryBlock.contains(pointerX, pointerY) && stationaryBlock.getColor() != BlockColor.CLEAR) {
+                    clearBlockCombo(stationaryBlock.getIndex());
+                }
+            }
+        }
     }
 
     private Texture getBlockImage (BlockColor color) {
@@ -88,15 +134,35 @@ public class GameScreen implements Screen {
                 blockImage = yellowBlockImage;
                 break;
             default:
-                blockImage = clearBlockImage;
+                throw new RuntimeException("Unknown block color: " + color.toString());
+        }
+        return blockImage;
+    }
+
+    private Texture getPreviewImage (BlockColor color) {
+        Texture blockImage;
+        switch (color) {
+            case RED:
+                blockImage = redPreviewImage;
                 break;
+            case GREEN:
+                blockImage = greenPreviewImage;
+                break;
+            case BLUE:
+                blockImage = bluePreviewImage;
+                break;
+            case YELLOW:
+                blockImage = yellowPreviewImage;
+                break;
+            default:
+                throw new RuntimeException("Unknown block color: " + color.toString());
         }
         return blockImage;
     }
 
     private void createBlockTick () {
         // Check if it is time to create a new block
-        if (TimeUtils.nanoTime() - lastBlockCreateTime > createBlockDelay * 1000000000) {
+        if (TimeUtils.timeSinceNanos(lastBlockCreateTime) > createBlockDelay * 1000000000) {
             createFallingBlock();
         }
     }
@@ -126,47 +192,24 @@ public class GameScreen implements Screen {
         }
     }
 
-    public void handleTouchDown (int x, int y, int pointer, int button) {
-        // Transform points
-        float pointerX = InputTransform.getCursorToModelX(x);
-        float pointerY = InputTransform.getCursorToModelY(y);
-
-        boolean touchedFallingBlock = false;
-
-        // Fill falling block
-        for (Block fallingBlock : fallingBlocks) {
-            if (fallingBlock.contains(pointerX, pointerY) && fallingBlock.getColor() == BlockColor.CLEAR) {
-                touchedFallingBlock = true;
-                // TODO Temp placement
-                Random rand = new Random();
-                switch (rand.nextInt(4)) {
-                    case 0:
-                        fallingBlock.setColor(BlockColor.RED);
-                        break;
-                    case 1:
-                        fallingBlock.setColor(BlockColor.GREEN);
-                        break;
-                    case 2:
-                        fallingBlock.setColor(BlockColor.BLUE);
-                        break;
-                    case 3:
-                        fallingBlock.setColor(BlockColor.YELLOW);
-                        break;
-                    default:
-                        fallingBlock.setColor(BlockColor.RED);
-                        break;
-                }
+    private void addIncomingColor () {
+        Random rand = new Random();
+        int randNum = rand.nextInt(4);
+        switch (randNum) {
+            case 0:
+                incomingColors.add(BlockColor.RED);
                 break;
-            }
-        }
-        setNewStationaryBlocks();
-
-        if (!touchedFallingBlock) {
-            for (Block stationaryBlock : stationaryBlocks) {
-                if (stationaryBlock.contains(pointerX, pointerY) && stationaryBlock.getColor() != BlockColor.CLEAR) {
-                    clearBlockCombo(stationaryBlock.getIndex());
-                }
-            }
+            case 1:
+                incomingColors.add(BlockColor.GREEN);
+                break;
+            case 2:
+                incomingColors.add(BlockColor.BLUE);
+                break;
+            case 3:
+                incomingColors.add(BlockColor.YELLOW);
+                break;
+            default:
+                throw new RuntimeException("Unexpected random number generated: " + String.valueOf(randNum));
         }
     }
 
