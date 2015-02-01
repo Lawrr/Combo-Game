@@ -5,7 +5,7 @@ import com.badlogic.gdx.math.Rectangle;
 public class FallingBlock extends Rectangle {
 
     private int index;
-    private boolean placed;
+    private boolean filled;
 
     public FallingBlock (float x, float y, float width, float height, int index) {
         this.x = x;
@@ -13,7 +13,7 @@ public class FallingBlock extends Rectangle {
         this.width = width;
         this.height = height;
         this.index = index;
-        this.placed = false;
+        this.filled = false;
     }
 
     public int getIndex() {
@@ -22,11 +22,10 @@ public class FallingBlock extends Rectangle {
     public void setIndex(int index) {
         this.index = index;
     }
-    public boolean isPlaced() {
-        return placed;
+    public boolean isFilled() {
+        return filled;
     }
-    public void setPlaced(boolean placed) {
-        this.placed = placed;
+    public void setFilled(boolean filled) {
+        this.filled = filled;
     }
-
 }

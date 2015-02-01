@@ -13,41 +13,30 @@ import java.util.Iterator;
 public class GameScreen implements Screen {
     private final ComboGame game;
 
-    private OrthographicCamera camera;
-    private long lastBlockSpawnTime;
+    private OrthographicCamera camera = new OrthographicCamera();
+    private long lastBlockCreateTime;
 
-    private Texture fallingBlockImage;
-    private Array<FallingBlock> fallingBlocks;
-    private Texture placedBlockImage;
-    private Array<PlacedBlock> placedBlocks;
+    private Texture fallingBlockImage = new Texture("falling-block.png");
+    private Array<FallingBlock> fallingBlocks = new Array<FallingBlock>();
+    private Texture stationaryBlockImage = new Texture("blue-block.jpg");
+    private Array<StationaryBlock> stationaryBlocks = new Array<StationaryBlock>();
 
-    private float spawnDelay;
-    private float fallSpeed;
-    private int numPlaced;
-    private int numFalling;
+    private float fallSpeed = 50;
+    private float createTime = 1.5f;
+    private float blockPosX = 130;
+    private int numStationary = 0;
+    private int numFalling = 0;
 
     public GameScreen (final ComboGame game) {
         this.game = game;
-
-        camera = new OrthographicCamera();
         camera.setToOrtho(false, ComboGame.screenWidth, ComboGame.screenHeight);
-        fallingBlockImage = new Texture("falling-block.png");
-        fallingBlocks = new Array<FallingBlock>();
-        placedBlockImage = new Texture("blue-block.jpg");
-        placedBlocks = new Array<PlacedBlock>();
-
-        spawnDelay = 1.5f;
-        fallSpeed = 50;
-        numPlaced = 0;
-        numFalling = 0;
-
         createFallingBlock();
     }
 
     @Override
     public void render (float delta) {
         // Clear the screen
-        Gdx.gl.glClearColor(1, 0, 0.2f, 1);
+        Gdx.gl.glClearColor(0, 0.1f, 0.2f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // Tell the camera to update its matrices
@@ -58,76 +47,113 @@ public class GameScreen implements Screen {
 
         // Begin drawing
         game.batch.begin();
-        for (PlacedBlock placedBlock : placedBlocks) {
-            if (!placedBlock.isEmpty()) {
-                game.batch.draw(placedBlockImage, placedBlock.x, placedBlock.y);
+        for (StationaryBlock stationaryBlock : stationaryBlocks) {
+            if (!stationaryBlock.isEmpty()) {
+                game.batch.draw(stationaryBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
             } else {
-                game.batch.draw(fallingBlockImage, placedBlock.x, placedBlock.y);
+                game.batch.draw(fallingBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
             }
         }
         for (FallingBlock fallingBlock : fallingBlocks) {
-            if (!fallingBlock.isPlaced()) {
-                game.batch.draw(fallingBlockImage, fallingBlock.x, fallingBlock.y);
+            if (!fallingBlock.isFilled()) {
+                game.batch.draw(fallingBlockImage, fallingBlock.getX(), fallingBlock.getY());
             } else {
-                game.batch.draw(placedBlockImage, fallingBlock.x, fallingBlock.y);
+                game.batch.draw(stationaryBlockImage, fallingBlock.getX(), fallingBlock.getY());
             }
         }
         game.batch.end();
 
         // Spawn blocks
-        if (TimeUtils.nanoTime() - lastBlockSpawnTime > spawnDelay * 1000000000) {
-            createFallingBlock();
-        }
+        createBlockTick();
 
         // Move blocks
+        moveBlockTick();
+    }
+
+    private void createBlockTick () {
+        // Check if it is time to create a new block
+        if (TimeUtils.nanoTime() - lastBlockCreateTime > createTime * 1000000000) {
+            createFallingBlock();
+        }
+    }
+
+    private void moveBlockTick () {
+        // Moves falling blocks' y positions
         Iterator<FallingBlock> iter = fallingBlocks.iterator();
         while (iter.hasNext()) {
             FallingBlock fallingBlock = iter.next();
             fallingBlock.setY(fallingBlock.getY() - fallSpeed * Gdx.graphics.getDeltaTime());
-            if (fallingBlock.getY() < numPlaced * fallingBlock.getHeight()) {
-                createPlacedBlock(!fallingBlock.isPlaced());
+            if (fallingBlock.getY() < numStationary * fallingBlock.getHeight()) {
+                createStationaryBlock(!fallingBlock.isFilled());
                 iter.remove();
             }
-
         }
     }
 
     public void handleTouchDown (int x, int y, int pointer, int button) {
+        // Transform points
         float pointerX = InputTransform.getCursorToModelX(x);
         float pointerY = InputTransform.getCursorToModelY(y);
 
-        Iterator<FallingBlock> iter = fallingBlocks.iterator();
-        int indexDecrement = 0;
-        while (iter.hasNext()) {
-            FallingBlock fallingBlock = iter.next();
-            fallingBlock.setIndex(fallingBlock.getIndex() - indexDecrement);
-            if ((fallingBlock.contains(pointerX, pointerY) && !fallingBlock.isPlaced()) || (fallingBlock.getIndex() == 0 && fallingBlock.isPlaced())) {
-                if (fallingBlock.getIndex() == 0) {
-                    indexDecrement++;
-                    createPlacedBlock(false);
-                    iter.remove();
+        // Fill falling block
+        for (FallingBlock fallingBlock : fallingBlocks) {
+            if (fallingBlock.contains(pointerX, pointerY) && !fallingBlock.isFilled()) {
+                fallingBlock.setFilled(true);
+                break;
+            }
+        }
+        dropBlocks();
+    }
+
+    private void dropBlocks () {
+        // Drops blocks into stationary position
+        int numBotFilled;
+        // Count how many blocks from the bottom are filled
+        for (numBotFilled = 0; numBotFilled < fallingBlocks.size; numBotFilled++) {
+            FallingBlock lowerBlock = fallingBlocks.get(numBotFilled);
+            if (!lowerBlock.isFilled()) {
+                break;
+            }
+        }
+        // Drop and set new falling block indices
+        if (numBotFilled > 0) {
+            int numRemove = numBotFilled;
+            for (int i = 0; i < fallingBlocks.size; i++) {
+                if (numRemove > 0) {
+                    removeFallingBlock(i);
+                    createStationaryBlock(false);
+                    numRemove--;
+                    i--;
                 } else {
-                    fallingBlock.setPlaced(true);
+                    FallingBlock fallingBlock = fallingBlocks.get(i);
+                    fallingBlock.setIndex(fallingBlock.getIndex() - numBotFilled);
                 }
             }
         }
     }
 
-    public void createPlacedBlock (boolean empty) {
-        float placedBlockY = numPlaced * placedBlockImage.getHeight();
-        PlacedBlock newBlock = new PlacedBlock(80, placedBlockY, placedBlockImage.getWidth(), placedBlockImage.getHeight(), empty);
-        placedBlocks.add(newBlock);
-        numPlaced++;
+    private void createStationaryBlock (boolean empty) {
+        // Creates a stationary block at the bottom of the screen
+        float stationaryBlockY = numStationary * stationaryBlockImage.getHeight();
+        StationaryBlock newBlock = new StationaryBlock(blockPosX, stationaryBlockY, stationaryBlockImage.getWidth(), stationaryBlockImage.getHeight(), empty);
+        stationaryBlocks.add(newBlock);
+        numStationary++;
     }
 
     private void createFallingBlock () {
         // Spawns a block at the top of the screen
-        if (fallingBlocks.size + placedBlocks.size < 12) {
-            FallingBlock fallingBlock = new FallingBlock(80, ComboGame.screenHeight, fallingBlockImage.getWidth(), fallingBlockImage.getHeight(), numFalling);
+        if (fallingBlocks.size + stationaryBlocks.size < 12) {
+            FallingBlock fallingBlock = new FallingBlock(blockPosX, ComboGame.screenHeight, fallingBlockImage.getWidth(), fallingBlockImage.getHeight(), numFalling);
             fallingBlocks.add(fallingBlock);
-            lastBlockSpawnTime = TimeUtils.nanoTime();
+            lastBlockCreateTime = TimeUtils.nanoTime();
             numFalling++;
         }
+    }
+
+    private void removeFallingBlock (int index) {
+        // Removes a falling block
+        fallingBlocks.removeIndex(index);
+        numFalling--;
     }
 
     @Override

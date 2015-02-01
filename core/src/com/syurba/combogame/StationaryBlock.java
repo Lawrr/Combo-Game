@@ -2,11 +2,11 @@ package com.syurba.combogame;
 
 import com.badlogic.gdx.math.Rectangle;
 
-public class PlacedBlock extends Rectangle {
+public class StationaryBlock extends Rectangle {
 
     private boolean empty;
 
-    public PlacedBlock(float x, float y, float width, float height, boolean empty) {
+    public StationaryBlock(float x, float y, float width, float height, boolean empty) {
         this.x = x;
         this.y = y;
         this.width = width;
