@@ -9,6 +9,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.TimeUtils;
 
 import java.util.Iterator;
+import java.util.Random;
 
 public class GameScreen implements Screen {
     private final ComboGame game;
@@ -16,9 +17,13 @@ public class GameScreen implements Screen {
     private OrthographicCamera camera = new OrthographicCamera();
     private long lastBlockCreateTime;
 
-    private Texture fallingBlockImage = new Texture("falling-block.png");
+    private Texture clearBlockImage = new Texture("clear-block.png");
+    private Texture redBlockImage = new Texture("red-block.png");
+    private Texture greenBlockImage = new Texture("green-block.png");
+    private Texture blueBlockImage = new Texture("blue-block.png");
+    private Texture yellowBlockImage = new Texture("yellow-block.png");
+
     private Array<Block> fallingBlocks = new Array<Block>();
-    private Texture stationaryBlockImage = new Texture("blue-block.png");
     private Array<Block> stationaryBlocks = new Array<Block>();
 
     private float fallingBlockSpeed = 80;
@@ -49,17 +54,41 @@ public class GameScreen implements Screen {
         // Begin drawing
         game.batch.begin();
         for (Block fallingBlock : fallingBlocks) {
-            if (fallingBlock.getColor() == BlockColor.CLEAR) {
-                game.batch.draw(fallingBlockImage, fallingBlock.getX(), fallingBlock.getY());
-            } else {
-                game.batch.draw(stationaryBlockImage, fallingBlock.getX(), fallingBlock.getY());
+            switch (fallingBlock.getColor()) {
+                case CLEAR:
+                    game.batch.draw(clearBlockImage, fallingBlock.getX(), fallingBlock.getY());
+                    break;
+                case RED:
+                    game.batch.draw(redBlockImage, fallingBlock.getX(), fallingBlock.getY());
+                    break;
+                case GREEN:
+                    game.batch.draw(greenBlockImage, fallingBlock.getX(), fallingBlock.getY());
+                    break;
+                case BLUE:
+                    game.batch.draw(blueBlockImage, fallingBlock.getX(), fallingBlock.getY());
+                    break;
+                case YELLOW:
+                    game.batch.draw(yellowBlockImage, fallingBlock.getX(), fallingBlock.getY());
+                    break;
             }
         }
         for (Block stationaryBlock : stationaryBlocks) {
-            if (stationaryBlock.getColor() == BlockColor.CLEAR) {
-                game.batch.draw(fallingBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
-            } else {
-                game.batch.draw(stationaryBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
+            switch (stationaryBlock.getColor()) {
+                case CLEAR:
+                    game.batch.draw(clearBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
+                    break;
+                case RED:
+                    game.batch.draw(redBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
+                    break;
+                case GREEN:
+                    game.batch.draw(greenBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
+                    break;
+                case BLUE:
+                    game.batch.draw(blueBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
+                    break;
+                case YELLOW:
+                    game.batch.draw(yellowBlockImage, stationaryBlock.getX(), stationaryBlock.getY());
+                    break;
             }
         }
         game.batch.end();
@@ -115,7 +144,22 @@ public class GameScreen implements Screen {
         for (Block fallingBlock : fallingBlocks) {
             if (fallingBlock.contains(pointerX, pointerY) && fallingBlock.getColor() == BlockColor.CLEAR) {
                 touchedFallingBlock = true;
-                fallingBlock.setColor(BlockColor.BLUE);
+                // TODO Temp placement
+                Random rand = new Random();
+                switch (rand.nextInt(4)) {
+                    case 0:
+                        fallingBlock.setColor(BlockColor.RED);
+                        break;
+                    case 1:
+                        fallingBlock.setColor(BlockColor.GREEN);
+                        break;
+                    case 2:
+                        fallingBlock.setColor(BlockColor.BLUE);
+                        break;
+                    case 3:
+                        fallingBlock.setColor(BlockColor.YELLOW);
+                        break;
+                }
                 break;
             }
         }
@@ -192,7 +236,7 @@ public class GameScreen implements Screen {
 
     private void createStationaryBlock (Block block) {
         // Creates a stationary block at the bottom of the screen
-        Block newBlock = new Block(blockPosX, block.getY(), stationaryBlockImage.getWidth(), stationaryBlockImage.getHeight(), numStationary, block.getColor());
+        Block newBlock = new Block(blockPosX, block.getY(), blueBlockImage.getWidth(), blueBlockImage.getHeight(), numStationary, block.getColor());
         stationaryBlocks.add(newBlock);
         numStationary++;
     }
@@ -206,7 +250,7 @@ public class GameScreen implements Screen {
     private void createFallingBlock () {
         // Spawns a block at the top of the screen
         if (fallingBlocks.size + stationaryBlocks.size < 12) {
-            Block fallingBlock = new Block(blockPosX, ComboGame.screenHeight, fallingBlockImage.getWidth(), fallingBlockImage.getHeight(), numFalling);
+            Block fallingBlock = new Block(blockPosX, ComboGame.screenHeight, clearBlockImage.getWidth(), clearBlockImage.getHeight(), numFalling);
             fallingBlocks.add(fallingBlock);
             lastBlockCreateTime = TimeUtils.nanoTime();
             numFalling++;
@@ -222,7 +266,7 @@ public class GameScreen implements Screen {
     @Override
     public void dispose () {
         // Dispose of all the native resources
-        fallingBlockImage.dispose();
+        clearBlockImage.dispose();
     }
 
     @Override
