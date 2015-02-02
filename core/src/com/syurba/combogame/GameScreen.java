@@ -172,11 +172,13 @@ public class GameScreen implements Screen {
         Iterator<Block> iter = fallingBlocks.iterator();
         while (iter.hasNext()) {
             Block fallingBlock = iter.next();
-            if (fallingBlock.getY() - (fallingBlockSpeed * Gdx.graphics.getDeltaTime()) < numStationary * fallingBlock.getHeight()) {
+            float dropAmount = fallingBlockSpeed * Gdx.graphics.getDeltaTime();
+
+            if (fallingBlock.getY() - dropAmount < fallingBlock.getStationaryY()) {
                 createStationaryBlock(fallingBlock);
                 iter.remove();
             } else {
-                fallingBlock.setY(fallingBlock.getY() - fallingBlockSpeed * Gdx.graphics.getDeltaTime());
+                fallingBlock.setY(fallingBlock.getY() - dropAmount);
             }
         }
     }
@@ -184,10 +186,12 @@ public class GameScreen implements Screen {
     private void moveStationaryBlocks () {
         // Moves stationary blocks' y positions
         for (Block stationaryBlock : stationaryBlocks) {
-            if (stationaryBlock.getY() - (stationaryBlockSpeed * Gdx.graphics.getDeltaTime()) > stationaryBlock.getIndex() * stationaryBlock.getHeight()) {
-                stationaryBlock.setY(stationaryBlock.getY() - stationaryBlockSpeed * Gdx.graphics.getDeltaTime());
-            } else {
-                stationaryBlock.setY(stationaryBlock.getIndex() * stationaryBlock.getHeight());
+            float dropAmount = stationaryBlockSpeed * Gdx.graphics.getDeltaTime();
+
+            if (stationaryBlock.getY() - dropAmount > stationaryBlock.getStationaryY()) {
+                stationaryBlock.setY(stationaryBlock.getY() - dropAmount);
+            } else if (stationaryBlock.getY() != stationaryBlock.getStationaryY()) {
+                stationaryBlock.setY(stationaryBlock.getStationaryY());
             }
         }
     }

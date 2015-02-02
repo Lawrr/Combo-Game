@@ -37,4 +37,8 @@ public class Block extends Rectangle {
     public void setColor(BlockColor color) {
         this.color = color;
     }
+
+    public float getStationaryY () {
+        return this.index * (this.height + 2);
+    }
 }
