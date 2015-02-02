@@ -33,10 +33,12 @@ public class GameScreen implements Screen {
 
     private float fallingBlockSpeed = 70;
     private float stationaryBlockSpeed = 3000;
-    private float createBlockDelay = 0.95f;
+    private float createBlockDelay = 1.2f * 1000000000;
     private int totalBlocks = 12;
     private int numStationary = 0;
     private int numFalling = 0;
+    private int gameOverDelay = 6;
+    private float gameOverDelayCount = 0;
 
     public GameScreen (final ComboGame game) {
         this.game = game;
@@ -79,6 +81,11 @@ public class GameScreen implements Screen {
                 game.batch.draw(previewImage, 40, ComboGame.screenHeight - 20 - (50 * (incomingColors.size - i)));
             }
         }
+        if (gameOverDelayCount > 0) {
+            game.font.setScale(4);
+            game.font.draw(game.batch, String.valueOf((int)(gameOverDelay - gameOverDelayCount)), ComboGame.screenWidth / 2, ComboGame.screenHeight / 2);
+            game.font.setScale(1);
+        }
         game.batch.end();
 
         // Spawn blocks
@@ -118,9 +125,18 @@ public class GameScreen implements Screen {
     }
 
     private void createBlockTick () {
+        // TODO Refactor this function
         // Check if it is time to create a new block
-        if (TimeUtils.timeSinceNanos(lastBlockCreateTime) > createBlockDelay * 1000000000) {
-            createFallingBlock();
+        if (TimeUtils.timeSinceNanos(lastBlockCreateTime) > createBlockDelay) {
+            if (fallingBlocks.size + stationaryBlocks.size < totalBlocks) {
+                createFallingBlock();
+                gameOverDelayCount = 0;
+            } else if (stationaryBlocks.size == totalBlocks) {
+                gameOverDelayCount += Gdx.graphics.getDeltaTime();
+                if (gameOverDelayCount > 5) {
+                    gotoMainMenu();
+                }
+            }
         }
     }
 
@@ -257,12 +273,10 @@ public class GameScreen implements Screen {
 
     private void createFallingBlock () {
         // Spawns a block at the top of the screen
-        if (fallingBlocks.size + stationaryBlocks.size < totalBlocks) {
-            Block fallingBlock = new Block(Block.stationaryX, ComboGame.screenHeight, clearBlockImage.getWidth(), clearBlockImage.getHeight(), numFalling);
-            fallingBlocks.add(fallingBlock);
-            lastBlockCreateTime = TimeUtils.nanoTime();
-            numFalling++;
-        }
+        Block fallingBlock = new Block(Block.stationaryX, ComboGame.screenHeight, clearBlockImage.getWidth(), clearBlockImage.getHeight(), numFalling);
+        fallingBlocks.add(fallingBlock);
+        lastBlockCreateTime = TimeUtils.nanoTime();
+        numFalling++;
     }
 
     private void removeFallingBlock (int index) {

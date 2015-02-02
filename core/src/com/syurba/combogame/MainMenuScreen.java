@@ -25,8 +25,8 @@ public class MainMenuScreen implements Screen {
         camera.update();
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
-        game.font.draw(game.batch, "Welcome to the Combo Game!", 100, 150);
-        game.font.draw(game.batch, "Tap anywhere to begin", 100, 100);
+        game.font.draw(game.batch, "Welcome to the Combo Game!", ComboGame.screenWidth / 4, ComboGame.screenHeight / 2 + 50);
+        game.font.draw(game.batch, "Tap anywhere to begin", ComboGame.screenWidth / 4, ComboGame.screenHeight / 2);
         game.batch.end();
 
         if (Gdx.input.isTouched()) {
