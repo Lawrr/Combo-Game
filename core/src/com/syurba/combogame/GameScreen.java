@@ -34,12 +34,14 @@ public class GameScreen implements Screen {
     private float fallingBlockSpeed = 70;
     private float stationaryBlockSpeed = 3000;
     private float createBlockDelay = 0.95f;
-    private float blockPosX = 130;
+    private int totalBlocks = 12;
     private int numStationary = 0;
     private int numFalling = 0;
 
     public GameScreen (final ComboGame game) {
         this.game = game;
+        Gdx.input.setCatchBackKey(true);
+
         camera.setToOrtho(false, ComboGame.screenWidth, ComboGame.screenHeight);
         createFallingBlock();
         for (int i = 0; i < 5; i++) {
@@ -113,51 +115,6 @@ public class GameScreen implements Screen {
                 }
             }
         }
-    }
-
-    private Texture getBlockImage (BlockColor color) {
-        Texture blockImage;
-        switch (color) {
-            case CLEAR:
-                blockImage = clearBlockImage;
-                break;
-            case RED:
-                blockImage = redBlockImage;
-                break;
-            case GREEN:
-                blockImage = greenBlockImage;
-                break;
-            case BLUE:
-                blockImage = blueBlockImage;
-                break;
-            case YELLOW:
-                blockImage = yellowBlockImage;
-                break;
-            default:
-                throw new RuntimeException("Unknown block color: " + color.toString());
-        }
-        return blockImage;
-    }
-
-    private Texture getPreviewImage (BlockColor color) {
-        Texture blockImage;
-        switch (color) {
-            case RED:
-                blockImage = redPreviewImage;
-                break;
-            case GREEN:
-                blockImage = greenPreviewImage;
-                break;
-            case BLUE:
-                blockImage = bluePreviewImage;
-                break;
-            case YELLOW:
-                blockImage = yellowPreviewImage;
-                break;
-            default:
-                throw new RuntimeException("Unknown block color: " + color.toString());
-        }
-        return blockImage;
     }
 
     private void createBlockTick () {
@@ -287,7 +244,7 @@ public class GameScreen implements Screen {
 
     private void createStationaryBlock (Block block) {
         // Creates a stationary block at the bottom of the screen
-        Block newBlock = new Block(blockPosX, block.getY(), blueBlockImage.getWidth(), blueBlockImage.getHeight(), numStationary, block.getColor());
+        Block newBlock = new Block(Block.stationaryX, block.getY(), block.getWidth(), block.getHeight(), numStationary, block.getColor());
         stationaryBlocks.add(newBlock);
         numStationary++;
     }
@@ -300,8 +257,8 @@ public class GameScreen implements Screen {
 
     private void createFallingBlock () {
         // Spawns a block at the top of the screen
-        if (fallingBlocks.size + stationaryBlocks.size < 12) {
-            Block fallingBlock = new Block(blockPosX, ComboGame.screenHeight, clearBlockImage.getWidth(), clearBlockImage.getHeight(), numFalling);
+        if (fallingBlocks.size + stationaryBlocks.size < totalBlocks) {
+            Block fallingBlock = new Block(Block.stationaryX, ComboGame.screenHeight, clearBlockImage.getWidth(), clearBlockImage.getHeight(), numFalling);
             fallingBlocks.add(fallingBlock);
             lastBlockCreateTime = TimeUtils.nanoTime();
             numFalling++;
@@ -314,10 +271,67 @@ public class GameScreen implements Screen {
         numFalling--;
     }
 
+    private Texture getBlockImage (BlockColor color) {
+        Texture blockImage;
+        switch (color) {
+            case CLEAR:
+                blockImage = clearBlockImage;
+                break;
+            case RED:
+                blockImage = redBlockImage;
+                break;
+            case GREEN:
+                blockImage = greenBlockImage;
+                break;
+            case BLUE:
+                blockImage = blueBlockImage;
+                break;
+            case YELLOW:
+                blockImage = yellowBlockImage;
+                break;
+            default:
+                throw new RuntimeException("Unknown block color: " + color.toString());
+        }
+        return blockImage;
+    }
+
+    private Texture getPreviewImage (BlockColor color) {
+        Texture blockImage;
+        switch (color) {
+            case RED:
+                blockImage = redPreviewImage;
+                break;
+            case GREEN:
+                blockImage = greenPreviewImage;
+                break;
+            case BLUE:
+                blockImage = bluePreviewImage;
+                break;
+            case YELLOW:
+                blockImage = yellowPreviewImage;
+                break;
+            default:
+                throw new RuntimeException("Unknown block color: " + color.toString());
+        }
+        return blockImage;
+    }
+
+    public void gotoMainMenu () {
+        game.setScreen(new MainMenuScreen(game));
+    }
+
     @Override
     public void dispose () {
         // Dispose of all the native resources
         clearBlockImage.dispose();
+        redBlockImage.dispose();
+        greenBlockImage.dispose();
+        blueBlockImage.dispose();
+        yellowBlockImage.dispose();
+        redBlockImage.dispose();
+        greenBlockImage.dispose();
+        blueBlockImage.dispose();
+        yellowBlockImage.dispose();
     }
 
     @Override

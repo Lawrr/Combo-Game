@@ -11,6 +11,8 @@ public class MainMenuScreen implements Screen {
 
     public MainMenuScreen (final ComboGame game) {
         this.game = game;
+        Gdx.input.setCatchBackKey(false);
+
         camera = new OrthographicCamera();
         camera.setToOrtho(false, ComboGame.screenWidth, ComboGame.screenHeight);
     }
@@ -35,7 +37,6 @@ public class MainMenuScreen implements Screen {
 
     @Override
     public void dispose () {
-        // Dispose of all the native resources
     }
 
     @Override

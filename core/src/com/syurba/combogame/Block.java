@@ -4,6 +4,8 @@ import com.badlogic.gdx.math.Rectangle;
 
 public class Block extends Rectangle {
 
+    public static float stationaryX = 130;
+
     private int index;
     private BlockColor color;
 

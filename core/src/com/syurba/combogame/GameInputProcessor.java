@@ -1,5 +1,6 @@
 package com.syurba.combogame;
 
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 
 public class GameInputProcessor implements InputProcessor {
@@ -16,7 +17,10 @@ public class GameInputProcessor implements InputProcessor {
 
     @Override
     public boolean keyUp (int keycode) {
-        return false;
+        if (keycode == Input.Keys.BACK) {
+            gameScreen.gotoMainMenu();
+        }
+        return true;
     }
 
     @Override
