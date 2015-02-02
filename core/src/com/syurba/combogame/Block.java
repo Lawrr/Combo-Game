@@ -39,6 +39,6 @@ public class Block extends Rectangle {
     }
 
     public float getStationaryY () {
-        return this.index * (this.height + 2);
+        return this.index * this.height;
     }
 }
