@@ -5,11 +5,11 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.TimeUtils;
 
 import java.util.Iterator;
-import java.util.Random;
 
 public class GameScreen implements Screen {
     private final ComboGame game;
@@ -193,8 +193,7 @@ public class GameScreen implements Screen {
     }
 
     private void addIncomingColor () {
-        Random rand = new Random();
-        int randNum = rand.nextInt(4);
+        int randNum = MathUtils.random(0, 3);
         switch (randNum) {
             case 0:
                 incomingColors.add(BlockColor.RED);
