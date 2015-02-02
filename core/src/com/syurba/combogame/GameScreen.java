@@ -130,8 +130,8 @@ public class GameScreen implements Screen {
         while (iter.hasNext()) {
             Block fallingBlock = iter.next();
             float dropAmount = fallingBlockSpeed * Gdx.graphics.getDeltaTime();
-
-            if (fallingBlock.getY() - dropAmount < fallingBlock.getStationaryY()) {
+            float stationaryY = numStationary * fallingBlock.getHeight();
+            if (fallingBlock.getY() - dropAmount < stationaryY) {
                 createStationaryBlock(fallingBlock);
                 iter.remove();
             } else {
@@ -144,11 +144,11 @@ public class GameScreen implements Screen {
         // Moves stationary blocks' y positions
         for (Block stationaryBlock : stationaryBlocks) {
             float dropAmount = stationaryBlockSpeed * Gdx.graphics.getDeltaTime();
-
-            if (stationaryBlock.getY() - dropAmount > stationaryBlock.getStationaryY()) {
+            float stationaryY = stationaryBlock.getIndex() * stationaryBlock.getHeight();
+            if (stationaryBlock.getY() - dropAmount > stationaryY) {
                 stationaryBlock.setY(stationaryBlock.getY() - dropAmount);
-            } else if (stationaryBlock.getY() != stationaryBlock.getStationaryY()) {
-                stationaryBlock.setY(stationaryBlock.getStationaryY());
+            } else if (stationaryBlock.getY() != stationaryY) {
+                stationaryBlock.setY(stationaryY);
             }
         }
     }
