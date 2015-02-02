@@ -226,15 +226,24 @@ public class GameScreen implements Screen {
             }
         }
         // Get lower index
+        boolean clearBlockBelow = false;
         for (lowerIndex = index; lowerIndex > 0; lowerIndex--) {
             Block lowerBlock = stationaryBlocks.get(lowerIndex - 1);
             if (lowerBlock.getColor() != comboColor) {
+                if (lowerBlock.getColor() == BlockColor.CLEAR && stationaryBlocks.get(lowerIndex).getColor() == comboColor) {
+                    clearBlockBelow = true;
+                }
                 break;
             }
         }
         int blocksInCombo = (upperIndex - lowerIndex) + 1;
         // Check if valid combo
         if (blocksInCombo > 1) {
+            // If there is a clear block below, count that to be removed as well
+            if (clearBlockBelow) {
+                lowerIndex--;
+                blocksInCombo++;
+            }
             // Clear blocks
             for (int i = lowerIndex; i <= upperIndex; i++) {
                 removeStationaryBlock(lowerIndex);
